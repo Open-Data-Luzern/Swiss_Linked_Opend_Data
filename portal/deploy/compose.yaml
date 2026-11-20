@@ -1,0 +1,80 @@
+# Swiss Open Linked Data auf dem Linux-Server.
+#
+#   cd /srv/swiss_ogd/portal
+#   cp .env.example .env              # Schluessel und Login eintragen
+#   alias dc='docker compose --env-file .env -f deploy/compose.yaml'
+#   dc build
+#   dc run --rm werkzeug python -m swiss_portal.graph
+#   dc up -d portal caddy
+#
+# --env-file .env ist noetig: Compose liest Variablen wie PROJEKT und DOMAIN
+# sonst aus deploy/.env, die es nicht gibt.
+#
+# Drei Dienste:
+#   portal    die Web-API und Oberflaeche; liest Datenbanken und Graph NUR lesend
+#   caddy     HTTPS mit Let's-Encrypt-Zertifikat, leitet an portal weiter.
+#             Braucht offene Ports 80 und 443 und den DNS-Eintrag auf diesen Server.
+#   werkzeug  dasselbe Abbild fuer einmalige Laeufe (Auswahl, Pruefung, Graphenbau);
+#             darf in portal/daten und graph/ schreiben. Startet nicht mit «up».
+#
+# Kein Cloudflare. Der Zugang ist der gemeinsame Login des Portals (in .env).
+#
+# Verzeichnisse auf dem Server (Projektwurzel /srv/swiss_ogd, wie auf D:\):
+#   /srv/swiss_ogd/Swiss_Open_Linked_Data/datenbanken   die 85 SQLite-Dateien (62 GB)
+#   /srv/swiss_ogd/graph                                 verknuepfung.sqlite (wird gebaut)
+#   /srv/swiss_ogd/portal                                dieser Ordner
+
+name: swiss-ogd
+
+x-pfade: &pfade
+  SWISS_OGD_DATEN: /daten/datenbanken
+  SWISS_OGD_GRAPH: /daten/graph/verknuepfung.sqlite
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "20m", max-file: "5" }
+
+services:
+  portal:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    image: swiss-ogd-portal:lokal
+    restart: unless-stopped
+    env_file: ../.env
+    environment: *pfade
+    volumes:
+      - ${PROJEKT:-/srv/swiss_ogd}/Swiss_Open_Linked_Data/datenbanken:/daten/datenbanken:ro
+      # das Verzeichnis, nicht die Datei: der Graphenbau tauscht die Datei aus
+      - ${PROJEKT:-/srv/swiss_ogd}/graph:/daten/graph:ro
+    expose: ["8040"]
+    logging: *logging
+
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:-linkeddata.sim-research.ch}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-daten:/data
+      - caddy-config:/config
+    depends_on: [portal]
+    logging: *logging
+
+  werkzeug:
+    image: swiss-ogd-portal:lokal
+    profiles: ["werkzeug"]
+    env_file: ../.env
+    environment: *pfade
+    working_dir: /app
+    user: "${UID_GID:-1000:1000}"
+    volumes:
+      - ${PROJEKT:-/srv/swiss_ogd}/Swiss_Open_Linked_Data/datenbanken:/daten/datenbanken:ro
+      - ${PROJEKT:-/srv/swiss_ogd}/graph:/daten/graph
+      - ${PROJEKT:-/srv/swiss_ogd}/portal/daten:/app/daten
+      - ${PROJEKT:-/srv/swiss_ogd}/portal/swiss_portal:/app/swiss_portal:ro
+    logging: *logging
+
+volumes:
+  caddy-daten:
+  caddy-config:

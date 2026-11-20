@@ -1,0 +1,5 @@
+# Web-API und Graphenbau. Der Kern des Projekts (Aufbau der 85 Datenbanken)
+# braucht davon nichts — er laeuft auf der Standardbibliothek.
+fastapi==0.163.1     # Web-API
+uvicorn==0.54.0      # ASGI-Server fuer FastAPI
+numpy==2.5.5         # Aehnlichkeit von ~20'000 Begriffen im Graphenbau

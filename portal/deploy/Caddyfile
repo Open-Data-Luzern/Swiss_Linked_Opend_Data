@@ -1,0 +1,15 @@
+# HTTPS fuer das Portal. Caddy holt das Zertifikat bei Let's Encrypt selbst,
+# sobald der DNS-Eintrag auf diesen Server zeigt und die Ports 80 und 443
+# von aussen erreichbar sind.
+{$DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+	reverse_proxy portal:8040
+}

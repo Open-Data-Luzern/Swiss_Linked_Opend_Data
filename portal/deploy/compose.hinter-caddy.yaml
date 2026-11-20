@@ -1,0 +1,7 @@
+# Server NicolasOnLinux: Ports 80/443 gehören dem Caddy von eigentliCH.
+# Statt des eigenen Caddy wird das Portal nur auf der Docker-Adresse des Hosts
+# geöffnet (wie Jitsi); der eigentliCH-Caddy leitet linkeddata.sim-research.ch dorthin.
+#   docker compose --env-file .env -f deploy/compose.yaml -f deploy/compose.hinter-caddy.yaml up -d portal
+services:
+  portal:
+    ports: ["172.17.0.1:8040:8040"]

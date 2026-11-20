@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swiss Open Linked Data</title>
+<meta name="description" content="Offene Behördendaten der Schweiz, verknüpft: Orte, Kennzahlen und Begriffe als gemeinsame Knoten.">
+<link rel="icon" href="kreuz.svg" type="image/svg+xml">
+<link rel="stylesheet" href="stil.css">
+</head>
+<body>
+<header class="kopf">
+  <div class="kopf-innen">
+    <a class="marke" href="#/"><img src="kreuz.svg" alt="" width="28" height="28"><span>Swiss Open Linked Data</span></a>
+    <nav class="haupt" aria-label="Hauptnavigation">
+      <a href="#/" data-route="">Cockpit</a>
+      <a href="#/entdecken" data-route="entdecken">Entdecken</a>
+      <a href="#/pfad" data-route="pfad">Verbinden</a>
+      <a href="#/frage" data-route="frage">Fragen</a>
+      <a href="#/methode" data-route="methode">Methode</a>
+    </nav>
+    <div class="kopf-suche" role="search">
+      <label class="sr" for="kopfsuche">Begriff, Ort oder Datensatz suchen</label>
+      <input id="kopfsuche" type="search" placeholder="Suchen: Schaf, Winterthur, Lärm …" autocomplete="off"
+             role="combobox" aria-expanded="false" aria-controls="kopfvorschlaege" aria-autocomplete="list">
+      <div class="vorschlag-liste" id="kopfvorschlaege" role="listbox" aria-label="Vorschläge" hidden></div>
+    </div>
+  </div>
+</header>
+<main id="inhalt" tabindex="-1"></main>
+<footer class="fuss"><div class="fuss-innen"><a href="#/methode">Methode und Quellen</a></div></footer>
+<script src="lib/d3-7.9.0.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
