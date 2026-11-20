@@ -7,6 +7,56 @@ hergibt, die Daten selbst.
 Gemessen am 22. September 2026: **85 Oberorganisationen**, 176 Organisationen
 insgesamt, **16'039 Datensätze**, rund 56'000 Datensammlungen.
 
+## Übergabe: das Wichtigste auf einen Blick
+
+Das Projekt hat zwei Teile:
+
+| Teil | Ordner | Was er tut |
+|---|---|---|
+| **Aufbau** | `src/swiss_ogd/`, `werkzeuge/`, `tests/` | erntet opendata.swiss und baut je Oberorganisation eine SQLite-Datenbank (dieses README) |
+| **Portal** | `portal/` | verknüpft die Datenbanken zu einem Graphen und zeigt ihn als Web-Portal mit Cockpit, Karte und Fragen ([portal/README.md](portal/README.md)) |
+
+**Wo es läuft:** auf dem Linux-Server unter `/srv/swiss_ogd`, in Docker
+(Compose-Projekt `swiss-ogd`), erreichbar unter
+<https://linkeddata.sim-research.ch> mit gemeinsamem Login.
+
+**Was NICHT im Repository ist** und für einen Aufbau anderswo separat
+übergeben werden muss:
+
+| Was | Grösse | Woher |
+|---|---|---|
+| die 85 Datenbanken (`Swiss_Open_Linked_Data/datenbanken/`) | 62 GB | neu bauen mit `python -m swiss_ogd aufbauen` (Tage) oder vom Server kopieren (`werkzeuge/uebertragen.sh`) |
+| `portal/daten/` (Auswahl, KI-Extraktion, Einbettungen, Gemeindeverzeichnis) | 183 MB | vom Server kopieren — die Extraktion ist nicht billig zu wiederholen |
+| der Graph (`graph/`) | 77 MB | aus den beiden obigen neu bauen, ~80 s |
+| `portal/.env` mit Schlüsseln und Login | — | persönlich übergeben, nie über Git; Vorlage `portal/.env.example` |
+
+**Die häufigsten Handgriffe** (auf dem Server, aus `/srv/swiss_ogd/portal`):
+
+```bash
+alias dc='docker compose --env-file .env -f deploy/compose.yaml -f deploy/compose.hinter-caddy.yaml'
+dc build portal && dc up -d portal                  # nach einer Code-Änderung
+dc run --rm werkzeug python -m swiss_portal.graph   # Graph neu bauen
+dc logs -f portal                                   # Protokoll ansehen
+```
+
+**Repository nachführen:** Der Server arbeitet in `/srv/swiss_ogd`; die
+Git-Kopie liegt in `/srv/swiss_ogd/repo`. `werkzeuge/repo_abgleichen.sh "Nachricht"`
+kopiert den Code dorthin (ohne `.env`, Daten, Graph, Protokolle) und lädt ihn
+hoch. Wurde direkt auf GitHub geändert, zuerst in `/srv/swiss_ogd/repo`
+`git pull` ausführen und die Änderungen nach `/srv/swiss_ogd` übertragen, erst
+dann abgleichen. Sonst lehnt GitHub das Hochladen ab, oder der Abgleich
+überschreibt die geholten Änderungen mit dem Stand des Servers.
+
+**Bekannte Grenzen des Prototyps:**
+
+- Der Katalog führt je Datensatz nur eine Sprachfassung; ein Begriff wie
+  «Fondue» ist darum nicht zu finden.
+- Die Verbindungen der Klasse «abgeleitet» stammen aus einer KI-Extraktion
+  (mit wörtlich geprüftem Beleg). Jeder Weg zeigt, wie stark er sich darauf stützt.
+- Nicht jede Frage bekommt eine Grafik: Viele BFS-Datenwürfel sind nur als
+  Katalogeintrag geladen, nicht als Tabelle.
+- Die URIs unter `/id/…` sind nicht persistent.
+
 ## Die beiden Ebenen
 
 Konsequent getrennt, wie im LU Datenportal:
